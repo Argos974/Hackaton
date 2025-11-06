@@ -37,6 +37,36 @@ from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
 import leafmap.foliumap as leafmap
 
+# --- Détection de localtileserver + fonction de fallback (DOIT être définie avant l'usage) ---
+try:
+    import localtileserver as _lts  # noqa: F401
+    LTS_AVAILABLE = True
+    LTS_VERSION = getattr(_lts, "__version__", None)
+except Exception:
+    LTS_AVAILABLE = False
+    LTS_VERSION = None
+
+def _preview_raster_statique(raster_path, title=None, colormap="viridis"):
+    """Affiche un aperçu statique d'un raster via rasterio + matplotlib (fallback si localtileserver absent)."""
+    try:
+        import rasterio
+        import matplotlib.pyplot as _plt
+        import numpy as _np
+        if not os.path.exists(raster_path):
+            st.error(f"Fichier introuvable : {raster_path}")
+            return
+        with rasterio.open(raster_path) as src:
+            arr = src.read(1).astype(float)
+            arr[~_np.isfinite(arr)] = _np.nan
+            fig, ax = _plt.subplots(figsize=(8, 5))
+            im = ax.imshow(arr, cmap=colormap, origin="upper")
+            ax.set_title(title or f"Aperçu : {os.path.basename(raster_path)}")
+            ax.axis("off")
+            fig.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
+            st.pyplot(fig)
+            _plt.close(fig)
+    except Exception as e:
+        st.error(f"Aperçu statique impossible : {e}")
 
 st.set_page_config(layout="wide")
 data_dir = "/workspaces/Hackaton"
@@ -789,34 +819,3 @@ with tab_aide:
     - Utilisez l'onglet Analyse pour explorer les résultats.
     - Exportez ou rechargez un scénario dans l'onglet Export.
     """)
-
-# --- Détection de localtileserver + fonction de fallback (DOIT être définie avant l'usage) ---
-try:
-    import localtileserver as _lts  # noqa: F401
-    LTS_AVAILABLE = True
-    LTS_VERSION = getattr(_lts, "__version__", None)
-except Exception:
-    LTS_AVAILABLE = False
-    LTS_VERSION = None
-
-def _preview_raster_statique(raster_path, title=None, colormap="viridis"):
-    """Affiche un aperçu statique d'un raster via rasterio + matplotlib (fallback si localtileserver absent)."""
-    try:
-        import rasterio
-        import matplotlib.pyplot as _plt
-        import numpy as _np
-        if not os.path.exists(raster_path):
-            st.error(f"Fichier introuvable : {raster_path}")
-            return
-        with rasterio.open(raster_path) as src:
-            arr = src.read(1).astype(float)
-            arr[~_np.isfinite(arr)] = _np.nan
-            fig, ax = _plt.subplots(figsize=(8, 5))
-            im = ax.imshow(arr, cmap=colormap, origin="upper")
-            ax.set_title(title or f"Aperçu : {os.path.basename(raster_path)}")
-            ax.axis("off")
-            fig.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
-            st.pyplot(fig)
-            _plt.close(fig)
-    except Exception as e:
-        st.error(f"Aperçu statique impossible : {e}")
