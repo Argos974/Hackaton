@@ -378,18 +378,37 @@ with tab_sim:
         if raster_selected:
             raster_path = os.path.join(data_dir, "Niche écologique par espèces", espece_selected, raster_selected)
             try:
-                # Utilise une palette standard si "ForetMarges" est sélectionné
+                # fallback de colormap si palette personnalisée non reconnue par leafmap
                 colormap_leafmap = colormap_selected
                 if colormap_selected == "ForetMarges":
-                    colormap_leafmap = "viridis"  # ou une autre palette standard
+                    colormap_leafmap = "viridis"
                 m.add_raster(
                     raster_path,
                     layer_name=raster_selected,
                     colormap=colormap_leafmap,
                     opacity=opacity_value
                 )
+            except ModuleNotFoundError as me:
+                msg = str(me)
+                if "localtileserver" in msg or "local tiles server" in msg.lower():
+                    st.error(
+                        "Impossibilité d'afficher le raster : localtileserver n'est pas installé dans l'environnement.\n"
+                        "Installez-le dans le venv et relancez l'application :\n\n"
+                        "`source .venv/bin/activate && pip install --prefer-binary localtileserver`"
+                    )
+                else:
+                    st.error(f"Module manquant : {me}")
+                raise me
             except Exception as e:
-                st.warning(f"Impossible d'afficher le raster {raster_selected} : {e}")
+                # message explicite si localtileserver est requis mais absent
+                estr = str(e).lower()
+                if "localtileserver" in estr:
+                    st.error(
+                        "Le package localtileserver est requis pour afficher ce raster via leafmap.\n"
+                        "Installez-le : `source .venv/bin/activate && pip install --prefer-binary localtileserver`"
+                    )
+                else:
+                    st.warning(f"Impossible d'afficher le raster {raster_selected} : {e}")
         else:
             st.warning("Aucun raster sélectionné ou disponible pour cette espèce et ce scénario.")
         
