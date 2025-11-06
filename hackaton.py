@@ -90,7 +90,13 @@ st.markdown("<div style='height:4em;'></div>", unsafe_allow_html=True)
 # --- Logo et titre ---
 col1, col2, col3 = st.columns([2, 6, 2])
 with col1:
-    st.image(f"{data_dir}Documents d'aide/CrigeBaseline_redim.png", use_container_width=False, width=150)
+    logo1_path = os.path.join(data_dir, "Documents d'aide", "CrigeBaseline_redim.png")
+    if os.path.exists(logo1_path):
+        st.image(logo1_path, use_container_width=False, width=150)
+    else:
+        # évite l'erreur si le fichier est absent
+        st.write("") 
+
 with col2:
     st.markdown("""
     <div style='display:flex;align-items:center;justify-content:center;width:100%;'>
@@ -100,8 +106,12 @@ with col2:
         unsafe_allow_html=True
     )
 with col3:
-    st.image(f"{data_dir}Documents d'aide/Logo geodatalab 2025.png", use_container_width=False, width=150)
-
+    logo2_path = os.path.join(data_dir, "Documents d'aide", "Logo geodatalab 2025.png")
+    if os.path.exists(logo2_path):
+        st.image(logo2_path, use_container_width=False, width=150)
+    else:
+        st.write("")
+# ...existing code...
 # --- Paramètre titre ---
 st.markdown("""
 <style>
