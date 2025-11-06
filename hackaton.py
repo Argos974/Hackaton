@@ -39,7 +39,7 @@ import leafmap.foliumap as leafmap
 
 
 st.set_page_config(layout="wide")
-data_dir = "C:/Users/Azura/Desktop/Semestre 9 M2/Hackaton GIS/Data/"
+data_dir = "/workspaces/Hackaton"
 
 # --- Gestion centralisée des fonds de carte ---
 fond_leafmap = {
