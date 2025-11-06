@@ -87,6 +87,9 @@ if "fond_carte" not in st.session_state:
 # --- Ajoute un espace vertical avant les logos et le titre ---
 st.markdown("<div style='height:4em;'></div>", unsafe_allow_html=True)
 
+# --- Chemin des données ---
+data_dir = "/workspaces/Hackaton"
+
 # --- Logo et titre ---
 col1, col2, col3 = st.columns([2, 6, 2])
 with col1:
@@ -111,7 +114,8 @@ with col3:
         st.image(logo2_path, use_container_width=False, width=150)
     else:
         st.write("")
-# ...existing code...
+
+
 # --- Paramètre titre ---
 st.markdown("""
 <style>
