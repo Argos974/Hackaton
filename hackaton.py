@@ -71,31 +71,49 @@ st.set_page_config(layout="wide")
 data_dir = "/workspaces/Hackaton"
 
 # filepath: 
-# ...existing code...
 import socket, subprocess, sys, os, time
 def ensure_tileserver_cli(raster_path: str, port: int = 46479, host: str = "0.0.0.0", timeout: float = 0.5) -> bool:
-    """Vérifie si 127.0.0.1:port est accessible ; sinon tente de lancer `python -m localtileserver` en arrière-plan."""
+    """Vérifie si 127.0.0.1:port est accessible ; sinon tente de lancer `python -m localtileserver` en arrière-plan.
+    Retourne True si le port est joignable depuis localhost ou l'IP du conteneur."""
+    def _check_ports(addrs):
+        for a in addrs:
+            try:
+                with socket.create_connection((a, port), timeout=timeout):
+                    return True
+            except Exception:
+                continue
+        return False
+
+    # 1) test rapide sur localhost
+    if _check_ports(["127.0.0.1", "localhost"]):
+        return True
+
+    # 2) test sur l'IP du conteneur (parfois nécessaire)
     try:
-        with socket.create_connection(("127.0.0.1", port), timeout=timeout):
-            return True
+        container_ip = socket.gethostbyname(socket.gethostname())
+        if container_ip and container_ip != "127.0.0.1":
+            if _check_ports([container_ip]):
+                return True
     except Exception:
-        pass
-    # tente de démarrer la CLI localtileserver
+        container_ip = None
+
+    # 3) tenter de démarrer la CLI localtileserver en arrière-plan
     try:
         cmd = [sys.executable, "-m", "localtileserver", raster_path, "--host", host, "--port", str(port), "--browser", "False"]
         logpath = os.path.join(os.getcwd(), "localtileserver_autostart.log")
         with open(logpath, "a") as logf:
             subprocess.Popen(cmd, stdout=logf, stderr=logf, start_new_session=True)
-        # courte attente
-        time.sleep(0.6)
-        try:
-            with socket.create_connection(("127.0.0.1", port), timeout=timeout):
-                return True
-        except Exception:
-            return False
     except Exception:
         return False
-# ...existing code...
+
+    # 4) polling court pour vérifier que le serveur monte
+    deadline = time.time() + 5.0  # jusqu'à 5s
+    while time.time() < deadline:
+        if _check_ports(["127.0.0.1", "localhost"]) or (container_ip and _check_ports([container_ip])):
+            return True
+        time.sleep(0.3)
+
+    return False
 
 # --- Gestion centralisée des fonds de carte ---
 fond_leafmap = {
